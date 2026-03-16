@@ -2,7 +2,7 @@
   "name": "emms-openclaw-plugin",
   "type": "module",
   "version": "1.0.0",
-  "description": "EMMS cognitive memory plugin for OpenClaw",
+  "description": "EMMS cognitive memory plugin for OpenClaw — biological 6-tier memory for AI agents",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -14,5 +14,17 @@
   },
   "peerDependencies": {
     "openclaw": "*"
+  },
+  "keywords": ["emms", "openclaw", "memory", "ai", "plugin", "cognitive"],
+  "author": "supermaxlol",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/supermaxlol/emms-deep-agent.git"
+  },
+  "homepage": "https://github.com/supermaxlol/emms-deep-agent#integration-3--openclaw-plugin",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }
