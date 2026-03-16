@@ -3,10 +3,14 @@
   "name": "EMMS Cognitive Memory",
   "kind": "memory",
   "configSchema": {
-    "emmsUrl": {
-      "type": "string",
-      "default": "http://127.0.0.1:8765",
-      "description": "EMMS REST API URL — start with: python talk_to_emms.py"
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "emmsUrl": {
+        "type": "string",
+        "default": "http://127.0.0.1:8765",
+        "description": "EMMS REST API URL — start with: python talk_to_emms.py"
+      }
     }
   }
 }

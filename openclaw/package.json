@@ -1,5 +1,6 @@
 {
   "name": "emms-openclaw-plugin",
+  "type": "module",
   "version": "1.0.0",
   "description": "EMMS cognitive memory plugin for OpenClaw",
   "main": "dist/index.js",

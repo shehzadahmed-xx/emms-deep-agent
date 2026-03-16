@@ -14,20 +14,18 @@
  * - Memories decay (Ebbinghaus), consolidate, and reconsolidate over time
  *
  * Install:
- *   cp -r openclaw/emms-plugin ~/.openclaw/plugins/emms/
+ *   cp -r openclaw/ ~/.openclaw/plugins/emms/
  *   # Add to ~/.openclaw/config.yaml:
  *   # memory:
  *   #   plugin: emms
  *   #   emmsUrl: http://127.0.0.1:8765  # optional, this is the default
  */
 
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk/memory-core";
+
 // ---------------------------------------------------------------------------
 // EMMS REST API client
 // ---------------------------------------------------------------------------
-
-interface EmmsConfig {
-  url: string;
-}
 
 interface EmmsMemoryResult {
   id: string;
@@ -121,14 +119,6 @@ function buildIdentityBlock(
   const total = stats.total_memories ?? memories.length;
   const coherence = stats.identity?.narrative_coherence ?? 0;
   const ego = stats.identity?.ego_boundary_strength ?? 0;
-  const domains = stats.identity?.domains?.slice(0, 4).join(", ") || "general";
-
-  const traits = stats.personality?.traits ?? {};
-  const topTraits = Object.entries(traits)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 3)
-    .map(([k, v]) => `${k} (${Math.round(v * 100)}%)`)
-    .join(", ");
 
   const uptime =
     total > 200
@@ -206,21 +196,6 @@ Speak from your memories, not about them.
 // OpenClaw Plugin Definition
 // ---------------------------------------------------------------------------
 
-type OpenClawPluginApi = {
-  on(
-    event: "before_agent_start",
-    handler: (event: { prompt: string; sessionKey?: string }) => Promise<{ prependContext?: string } | void>,
-  ): void;
-  on(
-    event: "agent_end",
-    handler: (event: {
-      success: boolean;
-      messages: Array<{ role: string; content: string }>;
-    }) => Promise<void>,
-  ): void;
-  config: Record<string, unknown>;
-};
-
 const emmsPlugin = {
   id: "memory-emms",
   name: "EMMS Cognitive Memory",
@@ -228,8 +203,8 @@ const emmsPlugin = {
 
   register(api: OpenClawPluginApi): void {
     const emmsUrl =
-      typeof api.config.emmsUrl === "string"
-        ? api.config.emmsUrl
+      typeof api.pluginConfig?.emmsUrl === "string"
+        ? api.pluginConfig.emmsUrl
         : "http://127.0.0.1:8765";
 
     // -----------------------------------------------------------------------
@@ -238,11 +213,7 @@ const emmsPlugin = {
     api.on("before_agent_start", async (event) => {
       const alive = await emmsHealth(emmsUrl);
       if (!alive) {
-        console.warn(
-          "[EMMS] REST API not reachable at",
-          emmsUrl,
-          "— running without memory",
-        );
+        api.logger.warn(`[EMMS] REST API not reachable at ${emmsUrl} — running without memory`);
         return;
       }
 
@@ -277,7 +248,10 @@ Be concise. You have a history — use it.
     api.on("agent_end", async (event) => {
       if (!event.success) return;
 
-      const messages = event.messages ?? [];
+      const messages = (event.messages ?? []) as Array<{
+        role?: string;
+        content?: string | Array<{ type?: string; text?: string }>;
+      }>;
 
       // Find last user + assistant message pair
       let lastUser = "";
@@ -285,10 +259,20 @@ Be concise. You have a history — use it.
 
       for (let i = messages.length - 1; i >= 0; i--) {
         const m = messages[i];
+        const text =
+          typeof m.content === "string"
+            ? m.content
+            : Array.isArray(m.content)
+              ? m.content
+                  .filter((c) => c.type === "text")
+                  .map((c) => c.text ?? "")
+                  .join("")
+              : "";
+
         if (!lastAssistant && m.role === "assistant") {
-          lastAssistant = m.content.slice(0, 300);
+          lastAssistant = text.slice(0, 300);
         } else if (!lastUser && m.role === "user") {
-          lastUser = m.content.slice(0, 200);
+          lastUser = text.slice(0, 200);
         }
         if (lastUser && lastAssistant) break;
       }
