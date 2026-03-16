@@ -1,0 +1,2 @@
+emms-sdk>=0.27.0
+deepagents>=0.4.0
