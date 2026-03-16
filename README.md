@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="emmslogo.png" alt="EMMS" width="300">
+</p>
+
 # EMMS Deep Agent
 
 Give any AI agent a biological mind. Identity from experience, not instruction.
